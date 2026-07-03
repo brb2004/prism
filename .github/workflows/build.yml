@@ -1,0 +1,108 @@
+name: Build Prism
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglfw3-dev libgl1-mesa-dev python3-pip libcurl4-openssl-dev
+          pip3 install glad2 --break-system-packages
+          mkdir -p lib/glad
+          python3 -m glad --api gl=3.3 --profile core --generator c --out-path lib/glad
+
+      - name: Build
+        run: make
+
+      - name: Upload Linux binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: prism-linux
+          path: bin/prism
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-glfw
+            mingw-w64-x86_64-curl
+            mingw-w64-x86_64-python
+            mingw-w64-x86_64-python-pip
+            zip
+            make
+
+      - name: Generate glad
+        shell: msys2 {0}
+        run: |
+          pip install glad2
+          mkdir -p lib/glad
+          python -m glad --api gl=3.3 --profile core --generator c --out-path lib/glad
+
+      - name: Build
+        shell: msys2 {0}
+        run: |
+          make clean
+          make OS=Windows_NT
+
+      - name: Bundle all DLLs recursively
+        shell: msys2 {0}
+        run: |
+          copy_deps() {
+            local file="$1"
+            objdump -p "$file" | grep "DLL Name" | awk '{print $3}' | while read dll; do
+              src="/mingw64/bin/$dll"
+              dst="bin/$dll"
+              if [ -f "$src" ] && [ ! -f "$dst" ]; then
+                echo "Copying $dll"
+                cp "$src" "$dst"
+                copy_deps "$dst"
+              fi
+            done
+          }
+          copy_deps bin/prism.exe
+          echo "Final DLLs:"
+          ls bin/*.dll
+          zip -j prism-windows.zip bin/prism.exe bin/*.dll
+
+      - name: Upload Windows zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: prism-windows
+          path: prism-windows.zip
+
+  release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            prism-linux/prism
+            prism-windows/prism-windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
