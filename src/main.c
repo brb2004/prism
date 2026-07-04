@@ -71,6 +71,8 @@ int main(int argc, const char* argv[]) {
     curl_global_init(CURL_GLOBAL_ALL);
     srand((unsigned int)time(NULL));
     initVM();
+    registerNatives();   
+
     if (argc == 1) {
         repl();
     } else if (argc == 2) {
@@ -79,8 +81,7 @@ int main(int argc, const char* argv[]) {
         fprintf(stderr, "Usage: prism [path]\n");
         exit(64);
     }
-    registerNatives();
-    repl();
+
     freeVM();
     glfwTerminate();
     curl_global_cleanup();
