@@ -45,10 +45,19 @@ static Value setWindowShouldCloseNative(int argCount, Value* args) {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
     return NIL_VAL;
 }
+static Value isKeyPressedNative(int argCount, Value* args) {
+    ENSURE_WINDOW();
+    if (argCount != 1 || !IS_NUMBER(args[0])) {
+        return BOOL_VAL(false);
+    }
+    int key = (int)AS_NUMBER(args[0]);
+    return BOOL_VAL(glfwGetKey(window, key) == GLFW_PRESS);
+}
 void registerGLNatives() {
     defineNative("windowshouldClose", windowShouldCloseNative);
     defineNative("pollEvents",        pollEventsNative);
     defineNative("swapBuffers",       swapBuffersNative);
     defineNative("clearColor",        clearColorNative);
     defineNative("setwindowClose",    setWindowShouldCloseNative);
+    defineNative("keyPressed",        isKeyPressedNative);
 }

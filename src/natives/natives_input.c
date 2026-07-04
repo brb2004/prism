@@ -23,15 +23,7 @@ static Value inputNative(int argCount, Value* args) {
 
     return OBJ_VAL(copyString(buffer, (int)len));
 }
-static Value isKeyPressedNative(int argCount, Value* args) {
-    ENSURE_WINDOW();
-    if (argCount != 1 || !IS_NUMBER(args[0])) {
-        return BOOL_VAL(false);
-    }
-    int key = (int)AS_NUMBER(args[0]);
-    return BOOL_VAL(glfwGetKey(window, key) == GLFW_PRESS);
-}
 void registerInputNatives() {
     defineNative("input", inputNative);
-    defineNative("keyPressed", isKeyPressedNative);
+
 }
