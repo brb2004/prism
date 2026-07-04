@@ -107,7 +107,7 @@ char* resolvePackage(const char* name) {
 
     getRedfieldDir(dir, sizeof(dir));
     snprintf(cacheDir, sizeof(cacheDir), "%s/packages", dir);
-    snprintf(cachePath, sizeof(cachePath), "%s/%s.rf", cacheDir, name);
+    snprintf(cachePath, sizeof(cachePath), "%s/%s.pr", cacheDir, name);
 
     if (fileExists(cachePath)) {
         fprintf(stderr, "DEBUG: found in cache\n");
@@ -117,7 +117,7 @@ char* resolvePackage(const char* name) {
     fprintf(stderr, "DEBUG: fetching from registry\n");
     char url[512];
     snprintf(url, sizeof(url),
-        "https://raw.githubusercontent.com/%s/prism-packages/main/%s/init.rf",
+        "https://raw.githubusercontent.com/%s/prism-packages/main/%s/init.pr",
         name, name);
 
     char* result = rfFetch(url, "GET", NULL);

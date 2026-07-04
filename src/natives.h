@@ -3,5 +3,6 @@
  
 void registerNatives();
 void registerGLNatives();
+void registerInputNatives();
 #endif
  

@@ -183,7 +183,7 @@ for (;;) {
             char fullPath[1024];
             int isPackageName = (strchr(path->chars, '/') == NULL &&
                                 strchr(path->chars, '\\') == NULL &&
-                                strstr(path->chars, ".rf") == NULL);
+                                strstr(path->chars, ".pr") == NULL);
             if (isPackageName) {
                 char* resolved = resolvePackage(path->chars);
                 if (!resolved) { runtimeError("Could not resolve package '%s'.", path->chars); return INTERPRET_RUNTIME_ERROR; }
