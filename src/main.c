@@ -71,6 +71,14 @@ int main(int argc, const char* argv[]) {
     curl_global_init(CURL_GLOBAL_ALL);
     srand((unsigned int)time(NULL));
     initVM();
+    if (argc == 1) {
+        repl();
+    } else if (argc == 2) {
+        runFile(argv[1]);
+    } else {
+        fprintf(stderr, "Usage: prism [path]\n");
+        exit(64);
+    }
     registerNatives();
     repl();
     freeVM();
