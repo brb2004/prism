@@ -41,6 +41,7 @@ void defineNative(const char* name, NativeFn function);
 void initVM();
 void freeVM();
 InterpretResult interpret(const char* source);
+InterpretResult run();
 void push(Value value);
 Value pop();
 bool call(ObjClosure* closure, int argCount);
