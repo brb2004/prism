@@ -39,10 +39,16 @@ static Value clearColorNative(int argCount, Value* args) {
     glClear(GL_COLOR_BUFFER_BIT);
     return NIL_VAL;
 }
-
+static Value setWindowShouldCloseNative(int argCount, Value* args) {
+    (void)argCount; (void)args;
+    ENSURE_WINDOW();
+    glfwSetWindowShouldClose(window, GLFW_TRUE);
+    return NIL_VAL;
+}
 void registerGLNatives() {
     defineNative("windowshouldClose", windowShouldCloseNative);
     defineNative("pollEvents",        pollEventsNative);
     defineNative("swapBuffers",       swapBuffersNative);
     defineNative("clearColor",        clearColorNative);
+    defineNative("setwindowClose",    setWindowShouldCloseNative);
 }
