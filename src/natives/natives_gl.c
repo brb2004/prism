@@ -1,65 +1,29 @@
-#include <stdio.h>
-#include "glad/glad.h"
-#include <GLFW/glfw3.h>
+ #include <stdio.h>
+#include <string.h>
 #include "vm.h"
 #include "obj.h"
 #include "memory.h"
 
-extern GLFWwindow* window;
-extern void initOpenGL();
-#define ENSURE_WINDOW() do { if (window == NULL) initOpenGL(); } while(0)
+static Value inputNative(int argCount, Value* args) {
+    if (argCount > 0 && IS_STRING(args[0])) {
+        printf("%s", AS_CSTRING(args[0]));
+        fflush(stdout);
+    }
 
-static Value closeWindowNative(int argCount, Value* args) {
-    (void)argCount; (void)args;
-    ENSURE_WINDOW();
-    return BOOL_VAL(glfwWindowShouldClose(window));
+    char buffer[1024];
+    if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+        return NIL_VAL;
+    }
+
+    size_t len = strlen(buffer);
+    if (len > 0 && buffer[len - 1] == '\n') {
+        buffer[len - 1] = '\0';
+        len--;
+    }
+
+    return OBJ_VAL(copyString(buffer, (int)len));
 }
 
-static Value pollEventsNative(int argCount, Value* args) {
-    (void)argCount; (void)args;
-    ENSURE_WINDOW();
-    glfwPollEvents();
-    return NIL_VAL;
-}
-
-static Value swapBuffersNative(int argCount, Value* args) {
-    (void)argCount; (void)args;
-    ENSURE_WINDOW();
-    glfwSwapBuffers(window);
-    return NIL_VAL;
-}
-
-static Value clearColorNative(int argCount, Value* args) {
-    (void)argCount;
-    ENSURE_WINDOW();
-    float r = (float)AS_NUMBER(args[0]);
-    float g = (float)AS_NUMBER(args[1]);
-    float b = (float)AS_NUMBER(args[2]);
-    glClearColor(r, g, b, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    return NIL_VAL;
-}
-static Value rgbNative(int argCount, Value* args){
-    (void)argCount;
-    ENSURE_WINDOW();
-    float r = (float)AS_NUMBER(args[0]);
-    float g = (float)AS_NUMBER(args[1]);
-    float b = (float)AS_NUMBER(args[2]);
-    glColor3f(r, g, b);
-    return NIL_VAL;
-
-}
-static Value openWindowNative(int argCount, Value* args) {
-    (void)argCount; (void)args;
-    ENSURE_WINDOW();
-    return NIL_VAL;
-}
-
-void registerGLNatives() {
-    defineNative("closeWindow",       closeWindowNative);
-    defineNative("pollEvents",        pollEventsNative);
-    defineNative("swapBuffers",       swapBuffersNative);
-    defineNative("clearColor",        clearColorNative);
-    defineNative("rgb",               rgbNative);
-    defineNative("openWindow",        openWindowNative);
+void registerInputNatives() {
+    defineNative("input", inputNative);
 }

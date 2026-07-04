@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "vm.h"
-#include "glad/glad.h"
+#include "glad/gl.h"
 #include <GLFW/glfw3.h>
 #include "natives.h"
 #include <curl/curl.h>
@@ -64,7 +64,7 @@ void initOpenGL() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     window = glfwCreateWindow(800, 600, "Prism", NULL, NULL);
     glfwMakeContextCurrent(window);
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+    gladLoadGL((GLADloadfunc)glfwGetProcAddress);
 }
 
 int main(int argc, const char* argv[]) {

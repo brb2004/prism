@@ -21,7 +21,7 @@ jobs:
           sudo apt-get install -y libglfw3-dev libgl1-mesa-dev python3-pip libcurl4-openssl-dev
           pip3 install glad2 --break-system-packages
           mkdir -p lib/glad
-          python3 -m glad --api gl:core=3.3 --out-path lib/glad c
+          python3 -m glad --api gl:compatibility=3.3 --out-path lib/glad c
       - name: Build
         run: make
 
@@ -55,7 +55,7 @@ jobs:
         run: |
           pip install glad2 --break-system-packages
           mkdir -p lib/glad
-          python -m glad --api gl:core=3.3 --out-path lib/glad c
+          python -m glad --api gl:compatibility=3.3 --out-path lib/glad c
       - name: Build
         shell: msys2 {0}
         run: |

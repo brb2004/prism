@@ -19,14 +19,14 @@ C_SRC = $(filter-out src/editor.c src/compiler.c src/vm.c, \
 
 C_OBJ   = $(C_SRC:.c=.o)
 CXX_OBJ = $(CXX_SRC:.cpp=.o)
-OBJ     = $(C_OBJ) $(CXX_OBJ) lib/cJSON/cJSON.o lib/glad/src/glad.o
+OBJ     = $(C_OBJ) $(CXX_OBJ) lib/cJSON/cJSON.o lib/glad/src/gl.o
 
 all: $(BIN)
 
 lib/cJSON/cJSON.o: lib/cJSON/cJSON.c
 	$(CC) -std=c99 -D__USE_MINGW_ANSI_STDIO=1 -Ilib/cJSON -c $< -o $@
 
-lib/glad/src/glad.o: lib/glad/src/glad.c
+lib/glad/src/gl.o: lib/glad/src/gl.c
 	$(CC) -Ilib/glad/include -c $< -o $@
 
 src/%.o: src/%.c
@@ -49,7 +49,7 @@ $(BIN): $(OBJ)
 	g++ $(OBJ) -o $(BIN) $(LIBS)
 
 clean:
-	rm -f src/*.o src/natives/*.o src/vm/*.o src/compiler/*.o lib/glad/src/glad.o lib/cJSON/cJSON.o $(BIN)
+	rm -f src/*.o src/natives/*.o src/vm/*.o src/compiler/*.o lib/glad/src/gl.o lib/cJSON/cJSON.o $(BIN)
 
 install: all
 	cp $(BIN) /usr/local/bin/prism
