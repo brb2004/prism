@@ -42,3 +42,7 @@ format.out.*
 /src/frontend/parser/*.cpp
 /src/optimization/*.cpp
 /src/util/*.cpp
+
+bin/hello
+bin/kern
+bin/test.elf
