@@ -1,0 +1,23 @@
+version 0.3.0 (tags/0.3.0):
+  - add support for FreeBSD system
+  - release planet language new versions 0.1.1 and 0.2.0
+
+version 0.2.2 (tags/0.2.2):
+  - global improvement of scripts and tools
+  - initial release of the planet language version 0.1.0
+
+version 0.2.1 (tags/0.2.1):
+  - improve error messages with line and column position
+  - bug fixes for multiple backlog issues
+
+version 0.2.0 (tags/0.2.0):
+  - full migration to C17 with large project refactoring
+  - remove required build dependency on CMake
+
+version 0.1.1 (tags/0.1.1):
+  - full rewrite of lexer to state machine without regex
+  - remove dependency on hackinadot/ctre library
+
+version 0.1.0 (tags/0.1.0):
+  - wheelcc initial release
+  - full implementation in C++17 for GNU/Linux and MacOS

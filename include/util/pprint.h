@@ -1,0 +1,37 @@
+#ifndef _UTIL_PPRINT_H
+#define _UTIL_PPRINT_H
+
+#ifndef __NDEBUG__
+#include "util/c_std.h"
+
+typedef struct Token Token;
+typedef struct Ast Ast;
+typedef struct CProgram CProgram;
+typedef struct TacProgram TacProgram;
+typedef struct AsmProgram AsmProgram;
+typedef struct BackEndContext BackEndContext;
+typedef struct FrontEndContext FrontEndContext;
+typedef struct IdentifierContext IdentifierContext;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Pretty print
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void pprint_toks(IdentifierContext* ctx, const vector_t(Token) tokens);
+void pprint_c_ast(IdentifierContext* ctx, const CProgram* node);
+void pprint_tac_ast(IdentifierContext* ctx, const TacProgram* node);
+void pprint_asm_ast(IdentifierContext* ctx, const AsmProgram* node);
+void pprint_addressed_set(IdentifierContext* ctx, FrontEndContext* frontend);
+void pprint_string_const_table(IdentifierContext* ctx, FrontEndContext* frontend);
+void pprint_struct_typedef_table(IdentifierContext* ctx, FrontEndContext* frontend);
+void pprint_symbol_table(IdentifierContext* ctx, FrontEndContext* frontend);
+void pprint_backend_symbol_table(IdentifierContext* ctx, BackEndContext* backend);
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+#endif

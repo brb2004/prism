@@ -1,0 +1,42 @@
+struct Point { x: i32, y: i32, };
+
+static var counter: u64 = 0;
+
+fun outb(port: u32, value: u32) -> i32 { return port + value; }
+
+fun main() -> i32 {
+  var p: Point;
+  var buf: [16]u32;
+  var mask: u32 = 0b1010 | 0xFF ^ 3;
+
+  p.x = 7;
+  buf[0] = 65;
+  mask |= 1 << 4;
+  mask &= ~15;
+  counter++;
+
+  var vga: *u32 = &buf[0];
+  *vga = mask;
+
+  var sz: u64 = sizeof(struct Point);
+
+  if (p.x > 0 and mask != 0) { counter = counter + 1; } else { counter = 0; }
+
+  var t: i32 = mask > 5 ? 1 : 2;
+
+  for (var i: i32 = 0; i < 16; i++) {
+    if (buf[i] == 0) { continue; }
+    buf[i] = ~buf[i] & 15;
+  }
+
+  do { counter -= 1; } while (counter > 0);
+
+  switch (t) {
+    case 1: outb(1016, buf[0]);
+    case 2: break;
+    default: goto done;
+  }
+
+done:
+  return p.x;
+}

@@ -1,0 +1,6 @@
+fun main() -> i32 {
+  var x: i16 = 5;
+  var p: *i16 = &x;
+  *p = 300;
+  return *p as i32;
+}
