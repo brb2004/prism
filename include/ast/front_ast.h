@@ -276,6 +276,7 @@ typedef struct CConditional {
 
 typedef struct CFunctionCall {
     TIdentifier name;
+    bool is_indirect;
     vector_t(unique_ptr_t(CExp)) args;
     CExp* _base;
 } CFunctionCall;

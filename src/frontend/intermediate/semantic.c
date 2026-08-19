@@ -1187,14 +1187,23 @@ static error_t check_conditional_exp(Ctx ctx, CConditional* node) {
     CATCH_EXIT;
 }
 
-static error_t check_call_exp(Ctx ctx, const CFunctionCall* node) {
+static error_t check_call_exp(Ctx ctx, CFunctionCall* node) {
     string_t name_fmt = str_new(NULL);
     string_t strto_fmt_1 = str_new(NULL);
     string_t strto_fmt_2 = str_new(NULL);
     CATCH_ENTER;
     const Symbol* fun_symbol = map_get(ctx->frontend->symbol_table, node->name);
-    const FunType* fun_type = &fun_symbol->type_t->get._FunType;
-    if (fun_symbol->type_t->type != AST_FunType_t) {
+    const FunType* fun_type = NULL;
+    if (fun_symbol->type_t->type == AST_FunType_t) {
+        node->is_indirect = false;
+        fun_type = &fun_symbol->type_t->get._FunType;
+    }
+    else if (fun_symbol->type_t->type == AST_Pointer_t
+        && fun_symbol->type_t->get._Pointer.ref_type->type == AST_FunType_t) {
+        node->is_indirect = true;
+        fun_type = &fun_symbol->type_t->get._Pointer.ref_type->get._FunType;
+    }
+    else {
         THROW_AT_TOKEN(
             node->_base->info_at, GET_SEMANTIC_MSG(MSG_var_used_as_fun, str_fmt_name(node->name, &name_fmt)));
     }

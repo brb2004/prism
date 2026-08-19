@@ -218,6 +218,8 @@ typedef struct TacUIntToDouble {
 
 typedef struct TacFunCall {
     TIdentifier name;
+    bool is_indirect;
+    shared_ptr_t(TacValue) callee;
     vector_t(shared_ptr_t(TacValue)) args;
     shared_ptr_t(TacValue) dst;
 } TacFunCall;
@@ -334,7 +336,8 @@ unique_ptr_t(TacInstruction) make_TacDoubleToUInt(shared_ptr_t(TacValue) * src, 
 unique_ptr_t(TacInstruction) make_TacIntToDouble(shared_ptr_t(TacValue) * src, shared_ptr_t(TacValue) * dst);
 unique_ptr_t(TacInstruction) make_TacUIntToDouble(shared_ptr_t(TacValue) * src, shared_ptr_t(TacValue) * dst);
 unique_ptr_t(TacInstruction)
-    make_TacFunCall(TIdentifier name, vector_t(shared_ptr_t(TacValue)) * args, shared_ptr_t(TacValue) * dst);
+    make_TacFunCall(TIdentifier name, bool is_indirect, shared_ptr_t(TacValue) * callee,
+        vector_t(shared_ptr_t(TacValue)) * args, shared_ptr_t(TacValue) * dst);
 unique_ptr_t(TacInstruction)
     make_TacUnary(const TacUnaryOp* unop, shared_ptr_t(TacValue) * src, shared_ptr_t(TacValue) * dst);
 unique_ptr_t(TacInstruction) make_TacBinary(const TacBinaryOp* binop, shared_ptr_t(TacValue) * src1,

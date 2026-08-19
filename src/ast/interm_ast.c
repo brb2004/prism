@@ -185,10 +185,14 @@ unique_ptr_t(TacInstruction) make_TacUIntToDouble(shared_ptr_t(TacValue) * src, 
 }
 
 unique_ptr_t(TacInstruction)
-    make_TacFunCall(TIdentifier name, vector_t(shared_ptr_t(TacValue)) * args, shared_ptr_t(TacValue) * dst) {
+    make_TacFunCall(TIdentifier name, bool is_indirect, shared_ptr_t(TacValue) * callee,
+        vector_t(shared_ptr_t(TacValue)) * args, shared_ptr_t(TacValue) * dst) {
     unique_ptr_t(TacInstruction) self = make_TacInstruction();
     self->type = AST_TacFunCall_t;
     self->get._TacFunCall.name = name;
+    self->get._TacFunCall.is_indirect = is_indirect;
+    self->get._TacFunCall.callee = sptr_new();
+    sptr_move(TacValue, *callee, self->get._TacFunCall.callee);
     self->get._TacFunCall.args = vec_new();
     vec_move(*args, self->get._TacFunCall.args);
     self->get._TacFunCall.dst = sptr_new();
@@ -365,6 +369,7 @@ void free_TacInstruction(unique_ptr_t(TacInstruction) * self) {
             free_TacValue(&(*self)->get._TacUIntToDouble.dst);
             break;
         case AST_TacFunCall_t:
+            free_TacValue(&(*self)->get._TacFunCall.callee);
             for (size_t i = 0; i < vec_size((*self)->get._TacFunCall.args); ++i) {
                 free_TacValue(&(*self)->get._TacFunCall.args[i]);
             }

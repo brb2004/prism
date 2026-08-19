@@ -253,6 +253,7 @@ unique_ptr_t(CExp) make_CFunctionCall(TIdentifier name, vector_t(unique_ptr_t(CE
     unique_ptr_t(CExp) self = make_CExp(info_at);
     self->type = AST_CFunctionCall_t;
     self->get._CFunctionCall.name = name;
+    self->get._CFunctionCall.is_indirect = false;
     self->get._CFunctionCall.args = vec_new();
     vec_move(*args, self->get._CFunctionCall.args);
     self->get._CFunctionCall._base = self;
