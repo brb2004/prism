@@ -59,6 +59,7 @@ static bool is_same_struct(const Structure* struct_type_1, const Structure* stru
     return struct_type_1->tag == struct_type_2->tag;
 }
 
+static bool is_same_fun_type(const FunType* fun_type_1, const FunType* fun_type_2);
 static bool is_same_type(const Type* type_1, const Type* type_2) {
     if (type_1->type == type_2->type) {
         switch (type_1->type) {
@@ -69,7 +70,7 @@ static bool is_same_type(const Type* type_1, const Type* type_2) {
             case AST_Structure_t:
                 return is_same_struct(&type_1->get._Structure, &type_2->get._Structure);
             case AST_FunType_t:
-                THROW_ABORT;
+                return is_same_fun_type(&type_1->get._FunType, &type_2->get._FunType);
             default:
                 return true;
         }
@@ -2912,13 +2913,44 @@ static error_t reslv_deref_exp(Ctx ctx, CDereference* node) {
 }
 
 static error_t reslv_addrof_expr(Ctx ctx, const CAddrOf* node) {
+    string_t name_fmt = str_new(NULL);
     CATCH_ENTER;
+
+    // `&f` where f is a function: the operand is not an lvalue and
+    // check_var_exp would reject it, so the name and type are resolved here
+    // instead of going through reslv_exp.
+    if (node->exp->type == AST_CVar_t) {
+        CVar* var = &node->exp->get._CVar;
+        TIdentifier resolved = 0;
+        bool found = false;
+        for (size_t i = vec_size(ctx->scoped_identifier_maps); i-- > 0;) {
+            ssize_t map_it = map_find(ctx->scoped_identifier_maps[i], var->name);
+            if (map_it != map_end()) {
+                resolved = pair_second(ctx->scoped_identifier_maps[i][map_it]);
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            Type* sym_type = map_get(ctx->frontend->symbol_table, resolved)->type_t;
+            if (sym_type->type == AST_FunType_t) {
+                var->name = resolved;
+                shared_ptr_t(Type) fun_type = sptr_new();
+                sptr_copy(Type, sym_type, fun_type);
+                sptr_copy(Type, sym_type, node->exp->exp_type);
+                node->_base->exp_type = make_Pointer(&fun_type);
+                goto Lexit;
+            }
+        }
+    }
+
     TRY(reslv_exp(ctx, node->exp));
     TRY(check_addrof_exp(ctx, node));
+Lexit:
     FINALLY;
+    str_delete(name_fmt);
     CATCH_EXIT;
 }
-
 static error_t reslv_subscript_exp(Ctx ctx, CSubscript* node) {
     CATCH_ENTER;
     TRY(reslv_typed_exp(ctx, &node->primary_exp));
