@@ -149,31 +149,6 @@ static shared_ptr_t(Type) parseType(void) {
         return make_Structure(internPrevious(), is_union);
     }
 
-    // `fun(T, T) -> T`. Only meaningful under a pointer: a bare function type
-    // is rejected later by is_valid_type, same as in C.
-    if (match(TOKEN_FUN)) {
-        if (!consume(TOKEN_LEFT_PAREN, "expect '(' after 'fun' in type")) return sptr_new();
-        vector_t(shared_ptr_t(Type)) param_types = vec_new();
-        if (!check(TOKEN_RIGHT_PAREN)) {
-            do {
-                shared_ptr_t(Type) param_type = parseType();
-                if (!param_type) return sptr_new();
-                vec_move_back(param_types, param_type);
-            }
-            while (match(TOKEN_COMMA));
-        }
-        if (!consume(TOKEN_RIGHT_PAREN, "expect ')' after parameter types")) return sptr_new();
-
-        shared_ptr_t(Type) ret_type = sptr_new();
-        if (match(TOKEN_ARROW)) {
-            ret_type = parseType();
-            if (!ret_type) return sptr_new();
-        }
-        else {
-            ret_type = make_Void();
-        }
-        return make_FunType(&param_types, &ret_type);
-    }
     if (!consume(TOKEN_IDENTIFIER, "expect type name")) return sptr_new();
 
     shared_ptr_t(Type) prim = primitiveType(&P.previous.tok);

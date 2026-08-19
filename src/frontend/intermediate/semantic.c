@@ -219,8 +219,14 @@ static error_t is_valid_type(Ctx ctx, const Type* type) {
         case AST_Array_t:
             TRY(is_valid_arr(ctx, &type->get._Array));
             break;
-        case AST_FunType_t:
-            THROW_ABORT;
+        case AST_FunType_t: {
+            const FunType* fun_type = &type->get._FunType;
+            for (size_t i = 0; i < vec_size(fun_type->param_types); ++i) {
+                TRY(is_valid_type(ctx, fun_type->param_types[i]));
+            }
+            TRY(is_valid_type(ctx, fun_type->ret_type));
+            break;
+        }
         default:
             break;
     }
@@ -2786,8 +2792,14 @@ static error_t reslv_struct_type(Ctx ctx, Type* type) {
         case AST_Structure_t:
             TRY(reslv_struct(ctx, &type->get._Structure));
             break;
-        case AST_FunType_t:
-            THROW_ABORT;
+        case AST_FunType_t: {
+            FunType* fun_type = &type->get._FunType;
+            for (size_t i = 0; i < vec_size(fun_type->param_types); ++i) {
+                TRY(reslv_struct_type(ctx, fun_type->param_types[i]));
+            }
+            TRY(reslv_struct_type(ctx, fun_type->ret_type));
+            break;
+        }
         default:
             break;
     }
