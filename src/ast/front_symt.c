@@ -320,24 +320,26 @@ unique_ptr_t(IdentifierAttr) make_IdentifierAttr(void) {
     self->type = AST_IdentifierAttr_t;
     return self;
 }
-
-unique_ptr_t(IdentifierAttr) make_FunAttr(bool is_def, bool is_glob) {
+unique_ptr_t(IdentifierAttr) make_FunAttr(bool is_def, bool is_glob, bool has_section, TIdentifier section) {
     unique_ptr_t(IdentifierAttr) self = make_IdentifierAttr();
     self->type = AST_FunAttr_t;
     self->get._FunAttr.is_def = is_def;
     self->get._FunAttr.is_glob = is_glob;
+    self->get._FunAttr.has_section = has_section;
+    self->get._FunAttr.section = section;
     return self;
 }
-
-unique_ptr_t(IdentifierAttr) make_StaticAttr(bool is_glob, shared_ptr_t(InitialValue) * init) {
+unique_ptr_t(IdentifierAttr) make_StaticAttr(
+    bool is_glob, bool has_section, TIdentifier section, shared_ptr_t(InitialValue) * init) {
     unique_ptr_t(IdentifierAttr) self = make_IdentifierAttr();
     self->type = AST_StaticAttr_t;
     self->get._StaticAttr.is_glob = is_glob;
+    self->get._StaticAttr.has_section = has_section;
+    self->get._StaticAttr.section = section;
     self->get._StaticAttr.init = sptr_new();
     sptr_move(InitialValue, *init, self->get._StaticAttr.init);
     return self;
 }
-
 unique_ptr_t(IdentifierAttr) make_ConstantAttr(shared_ptr_t(StaticInit) * static_init) {
     unique_ptr_t(IdentifierAttr) self = make_IdentifierAttr();
     self->type = AST_ConstantAttr_t;

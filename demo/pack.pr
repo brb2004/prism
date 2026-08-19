@@ -1,2 +1,2 @@
-struct S { a: u8, b: u32, };
+packed struct S { a: u8, b: u32, };
 fun main() -> i32 { return sizeof(struct S) as i32; }

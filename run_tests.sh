@@ -8,3 +8,4 @@ check demo/kernel.pr 7
 check demo/i16.pr 44
 check demo/neg.pr 254
 exit $fail
+check demo/pack.pr 5

@@ -439,14 +439,20 @@ void free_AsmInstruction(unique_ptr_t(AsmInstruction) * self);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// top_level = Function(identifier, bool, bool, instruction*)
-//           | StaticVariable(identifier, bool, int, static_init*)
+// top_level = Function(identifier, bool, bool, bool, identifier, instruction*)
+//           | StaticVariable(identifier, bool, int, bool, identifier, static_init*)
 //           | StaticConstant(identifier, int, static_init)
+//
+// has_section / section carry an explicit `section "..."` override from the
+// source. When has_section is false the emitter picks the default (.text for
+// functions, .data or .bss for variables), so existing behaviour is unchanged.
 
 typedef struct AsmFunction {
     TIdentifier name;
     bool is_glob;
     bool is_ret_memory;
+    bool has_section;
+    TIdentifier section;
     vector_t(unique_ptr_t(AsmInstruction)) instructions;
 } AsmFunction;
 
@@ -454,6 +460,8 @@ typedef struct AsmStaticVariable {
     TIdentifier name;
     TInt alignment;
     bool is_glob;
+    bool has_section;
+    TIdentifier section;
     vector_t(shared_ptr_t(StaticInit)) static_inits;
 } AsmStaticVariable;
 
@@ -477,10 +485,10 @@ typedef struct AsmTopLevel {
 extern "C" {
 #endif
 unique_ptr_t(AsmTopLevel) make_AsmTopLevel(void);
-unique_ptr_t(AsmTopLevel) make_AsmFunction(
-    TIdentifier name, bool is_glob, bool is_ret_memory, vector_t(unique_ptr_t(AsmInstruction)) * instructions);
-unique_ptr_t(AsmTopLevel) make_AsmStaticVariable(
-    TIdentifier name, TInt alignment, bool is_glob, vector_t(shared_ptr_t(StaticInit)) * static_inits);
+unique_ptr_t(AsmTopLevel) make_AsmFunction(TIdentifier name, bool is_glob, bool is_ret_memory, bool has_section,
+    TIdentifier section, vector_t(unique_ptr_t(AsmInstruction)) * instructions);
+unique_ptr_t(AsmTopLevel) make_AsmStaticVariable(TIdentifier name, TInt alignment, bool is_glob, bool has_section,
+    TIdentifier section, vector_t(shared_ptr_t(StaticInit)) * static_inits);
 unique_ptr_t(AsmTopLevel)
     make_AsmStaticConstant(TIdentifier name, TInt alignment, shared_ptr_t(StaticInit) * static_init);
 void free_AsmTopLevel(unique_ptr_t(AsmTopLevel) * self);

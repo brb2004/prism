@@ -44,7 +44,8 @@ typedef enum {
   TOKEN_STATIC,     
   TOKEN_EXTERN,    
   TOKEN_AS,       
-
+  TOKEN_PACKED,
+  TOKEN_SECTION,
 
   TOKEN_ERROR, TOKEN_EOF
 } TokenType;

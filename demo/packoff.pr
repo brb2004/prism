@@ -1,0 +1,9 @@
+packed struct S { a: u8, b: u32, };
+fun main() -> i32 {
+  var s: S;
+  var p: *u8 = &s as *u8;
+  s.b = 0;
+  s.a = 0;
+  p[1] = 7;
+  return s.b as i32;
+}

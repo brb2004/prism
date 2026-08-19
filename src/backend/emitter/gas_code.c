@@ -905,7 +905,14 @@ static void glob_directive_toplvl(Ctx ctx, TIdentifier name, bool is_glob) {
 //                                                        $     <instructions>
 static void emit_fun_toplvl(Ctx ctx, const AsmFunction* node) {
     glob_directive_toplvl(ctx, node->name, node->is_glob);
-    emit(ctx, TAB ".text" LF);
+    if (node->has_section) {
+        emit(ctx, TAB ".section ");
+        emit_identifier(ctx, node->section);
+        emit(ctx, LF);
+    }
+    else {
+        emit(ctx, TAB ".text" LF);
+    }
     emit_identifier(ctx, node->name);
     emit(ctx, ":" LF TAB "pushq %rbp" LF TAB "movq %rsp, %rbp" LF);
     emit_instr_list(ctx, node->instructions);
@@ -913,8 +920,13 @@ static void emit_fun_toplvl(Ctx ctx, const AsmFunction* node) {
 
 // -> if zero initialized $ .bss
 // ->                else $ .data
-static void static_section_toplvl(Ctx ctx, vector_t(shared_ptr_t(StaticInit)) node_list) {
-    if (vec_size(node_list) == 1 && node_list[0]->type == AST_ZeroInit_t) {
+static void static_section_toplvl(Ctx ctx, const AsmStaticVariable* node) {
+    if (node->has_section) {
+        emit(ctx, TAB ".section ");
+        emit_identifier(ctx, node->section);
+        emit(ctx, LF);
+    }
+    else if (vec_size(node->static_inits) == 1 && node->static_inits[0]->type == AST_ZeroInit_t) {
         emit(ctx, TAB ".bss" LF);
     }
     else {
@@ -1010,7 +1022,7 @@ static void static_init_toplvl(Ctx ctx, const StaticInit* node) {
 //                                        $     <init_list>
 static void emit_static_var_toplvl(Ctx ctx, const AsmStaticVariable* node) {
     glob_directive_toplvl(ctx, node->name, node->is_glob);
-    static_section_toplvl(ctx, node->static_inits);
+    static_section_toplvl(ctx, node);
     align_directive_toplvl(ctx, node->alignment);
     emit_identifier(ctx, node->name);
     emit(ctx, ":" LF);

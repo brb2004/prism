@@ -403,31 +403,32 @@ unique_ptr_t(AsmTopLevel) make_AsmTopLevel(void) {
     self->type = AST_AsmTopLevel_t;
     return self;
 }
-
-unique_ptr_t(AsmTopLevel) make_AsmFunction(
-    TIdentifier name, bool is_glob, bool is_ret_memory, vector_t(unique_ptr_t(AsmInstruction)) * instructions) {
+unique_ptr_t(AsmTopLevel) make_AsmFunction(TIdentifier name, bool is_glob, bool is_ret_memory, bool has_section,
+    TIdentifier section, vector_t(unique_ptr_t(AsmInstruction)) * instructions) {
     unique_ptr_t(AsmTopLevel) self = make_AsmTopLevel();
     self->type = AST_AsmFunction_t;
     self->get._AsmFunction.name = name;
     self->get._AsmFunction.is_glob = is_glob;
     self->get._AsmFunction.is_ret_memory = is_ret_memory;
+    self->get._AsmFunction.has_section = has_section;
+    self->get._AsmFunction.section = section;
     self->get._AsmFunction.instructions = vec_new();
     vec_move(*instructions, self->get._AsmFunction.instructions);
     return self;
 }
-
-unique_ptr_t(AsmTopLevel) make_AsmStaticVariable(
-    TIdentifier name, TInt alignment, bool is_glob, vector_t(shared_ptr_t(StaticInit)) * static_inits) {
+unique_ptr_t(AsmTopLevel) make_AsmStaticVariable(TIdentifier name, TInt alignment, bool is_glob, bool has_section,
+    TIdentifier section, vector_t(shared_ptr_t(StaticInit)) * static_inits) {
     unique_ptr_t(AsmTopLevel) self = make_AsmTopLevel();
     self->type = AST_AsmStaticVariable_t;
     self->get._AsmStaticVariable.name = name;
     self->get._AsmStaticVariable.alignment = alignment;
     self->get._AsmStaticVariable.is_glob = is_glob;
+    self->get._AsmStaticVariable.has_section = has_section;
+    self->get._AsmStaticVariable.section = section;
     self->get._AsmStaticVariable.static_inits = vec_new();
     vec_move(*static_inits, self->get._AsmStaticVariable.static_inits);
     return self;
 }
-
 unique_ptr_t(AsmTopLevel)
     make_AsmStaticConstant(TIdentifier name, TInt alignment, shared_ptr_t(StaticInit) * static_init) {
     unique_ptr_t(AsmTopLevel) self = make_AsmTopLevel();

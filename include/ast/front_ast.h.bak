@@ -728,8 +728,7 @@ typedef struct CFunctionDeclaration {
 extern "C" {
 #endif
 unique_ptr_t(CFunctionDeclaration) make_CFunctionDeclaration(TIdentifier name, vector_t(TIdentifier) * params,
-    unique_ptr_t(CBlock) * body, shared_ptr_t(Type) * fun_type, const CStorageClass* storage_class,
-    bool has_section, TIdentifier section, size_t info_at);
+    unique_ptr_t(CBlock) * body, shared_ptr_t(Type) * fun_type, const CStorageClass* storage_class, size_t info_at);
 void free_CFunctionDeclaration(unique_ptr_t(CFunctionDeclaration) * self);
 #ifdef __cplusplus
 }
@@ -754,8 +753,7 @@ typedef struct CVariableDeclaration {
 extern "C" {
 #endif
 unique_ptr_t(CVariableDeclaration) make_CVariableDeclaration(TIdentifier name, unique_ptr_t(CInitializer) * init,
-    shared_ptr_t(Type) * var_type, const CStorageClass* storage_class,
-    bool has_section, TIdentifier section, size_t info_at);
+    shared_ptr_t(Type) * var_type, const CStorageClass* storage_class, size_t info_at);
 void free_CVariableDeclaration(unique_ptr_t(CVariableDeclaration) * self);
 #ifdef __cplusplus
 }

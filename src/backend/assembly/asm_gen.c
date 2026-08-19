@@ -2681,6 +2681,15 @@ static void fun_param_toplvl(Ctx ctx, const TacFunction* node, FunType* fun_type
 
 static unique_ptr_t(AsmTopLevel) gen_fun_toplvl(Ctx ctx, const TacFunction* node) {
     TIdentifier name = node->name;
+    bool has_section = false;
+    TIdentifier section = 0;
+    {
+        const IdentifierAttr* attrs = map_get(ctx->frontend->symbol_table, node->name)->attrs;
+        if (attrs->type == AST_FunAttr_t) {
+            has_section = attrs->get._FunAttr.has_section;
+            section = attrs->get._FunAttr.section;
+        }
+    }
     bool is_glob = node->is_glob;
     bool is_ret_memory = false;
 
@@ -2700,6 +2709,7 @@ static unique_ptr_t(AsmTopLevel) gen_fun_toplvl(Ctx ctx, const TacFunction* node
                     shared_ptr_t(AsmOperand) dst = gen_memory(REG_Bp, -8l);
                     shared_ptr_t(AssemblyType) asm_type_dst = make_QuadWord();
                     push_instr(ctx, make_AsmMov(&asm_type_dst, &src, &dst));
+                    return make_AsmFunction(name, is_glob, is_ret_memory, has_section, section, &body);
                 }
             }
         }
@@ -2711,9 +2721,8 @@ static unique_ptr_t(AsmTopLevel) gen_fun_toplvl(Ctx ctx, const TacFunction* node
         ctx->p_instrs = NULL;
     }
 
-    return make_AsmFunction(name, is_glob, is_ret_memory, &body);
+    return make_AsmFunction(name, is_glob, is_ret_memory, false, 0, &body);
 }
-
 static unique_ptr_t(AsmTopLevel) gen_static_var_toplvl(Ctx ctx, const TacStaticVariable* node) {
     TIdentifier name = node->name;
     bool is_glob = node->is_glob;
@@ -2725,7 +2734,7 @@ static unique_ptr_t(AsmTopLevel) gen_static_var_toplvl(Ctx ctx, const TacStaticV
         sptr_copy(StaticInit, node->static_inits[i], static_init);
         vec_move_back(static_inits, static_init);
     }
-    return make_AsmStaticVariable(name, alignment, is_glob, &static_inits);
+    return make_AsmStaticVariable(name, alignment, is_glob, false, 0, &static_inits);
 }
 
 static void push_static_const_toplvl(Ctx ctx, unique_ptr_t(AsmTopLevel) static_const_toplvls) {

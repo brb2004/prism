@@ -1922,7 +1922,7 @@ static error_t check_fun_decl(Ctx ctx, const CFunctionDeclaration* node) {
     }
 
     sptr_copy(Type, node->fun_type, glob_fun_type);
-    glob_fun_attrs = make_FunAttr(is_def, is_glob);
+    glob_fun_attrs = make_FunAttr(is_def, is_glob, false, 0);
     symbol = make_Symbol(&glob_fun_type, &glob_fun_attrs);
     map_move_add(ctx->frontend->symbol_table, node->name, symbol);
     FINALLY;
@@ -2347,7 +2347,7 @@ static error_t check_file_var_decl(Ctx ctx, const CVariableDeclaration* node) {
     }
 
     sptr_copy(Type, node->var_type, glob_var_type);
-    glob_var_attrs = make_StaticAttr(is_glob, &init_value);
+    glob_var_attrs = make_StaticAttr(is_glob, false, 0, &init_value);
     symbol = make_Symbol(&glob_var_type, &glob_var_attrs);
     map_move_add(ctx->frontend->symbol_table, node->name, symbol);
     FINALLY;
@@ -2387,7 +2387,7 @@ static error_t check_extern_block_var_decl(Ctx ctx, const CVariableDeclaration* 
 
     sptr_copy(Type, node->var_type, local_var_type);
     init_value = make_NoInitializer();
-    local_var_attrs = make_StaticAttr(true, &init_value);
+    local_var_attrs = make_StaticAttr(true, false, 0, &init_value);
     symbol = make_Symbol(&local_var_type, &local_var_attrs);
     map_move_add(ctx->frontend->symbol_table, node->name, symbol);
     FINALLY;
@@ -2418,7 +2418,7 @@ static error_t check_static_block_var_decl(Ctx ctx, const CVariableDeclaration* 
     }
 
     sptr_copy(Type, node->var_type, local_var_type);
-    local_var_attrs = make_StaticAttr(false, &init_value);
+    local_var_attrs = make_StaticAttr(false, false, 0, &init_value);
     THROW_ABORT_IF(map_find(ctx->frontend->symbol_table, node->name) != map_end());
     symbol = make_Symbol(&local_var_type, &local_var_attrs);
     map_move_add(ctx->frontend->symbol_table, node->name, symbol);
@@ -2548,9 +2548,11 @@ static error_t check_struct_decl(Ctx ctx, const CStructDeclaration* node) {
                 }
             }
             else {
-                offset = size % member_alignment;
-                if (offset != 0l) {
-                    size += member_alignment - offset;
+                if (!node->is_packed) {
+                    offset = size % member_alignment;
+                    if (offset != 0l) {
+                        size += member_alignment - offset;
+                    }
                 }
                 offset = size;
                 size += member_size;
@@ -2564,6 +2566,9 @@ static error_t check_struct_decl(Ctx ctx, const CStructDeclaration* node) {
         if (alignment < member_alignment) {
             alignment = member_alignment;
         }
+    }
+        if (node->is_packed) {
+        alignment = 1;
     }
     {
         TLong offset = size % alignment;

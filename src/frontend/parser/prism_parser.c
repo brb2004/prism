@@ -9,20 +9,9 @@
 #include "prism_lexer.h"
 #include "prism_parser.h"
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// Prism parser
-//
-// Streams tokens from scanToken() and builds wheelcc's frontend AST directly.
-// Every rule returns a node instead of emitting bytes; NULL means "an error was
-// already reported". Nodes built before an error are leaked - a compiler run is
-// short-lived and the process exits on failure, so this is deliberate.
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 typedef struct {
     Token tok;
-    size_t info_at;    // index into errors->token_infos
+    size_t info_at;   
 } PToken;
 
 typedef struct {
@@ -36,10 +25,6 @@ typedef struct {
 } PrismParser;
 
 static PrismParser P;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Errors
 
 static void errorAt(const PToken* ptok, const char* message) {
     if (P.panicMode) return;
@@ -61,13 +46,6 @@ static void errorAt(const PToken* ptok, const char* message) {
 static void error(const char* message) { errorAt(&P.previous, message); }
 static void errorAtCurrent(const char* message) { errorAt(&P.current, message); }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Token plumbing
-
-// Every AST constructor wants a size_t info_at indexing errors->token_infos.
-// One entry is pushed per token as it is scanned, so the index is just the
-// position in that vector.
 static size_t pushTokenInfo(const Token* tok) {
     TokenInfo info;
     info.tok_pos = tok->col - 1;
@@ -104,8 +82,6 @@ static bool consume(TokenType type, const char* message) {
     return false;
 }
 
-// Interns the previous token's text. TIdentifier is a hash handle, not a
-// pointer - make_string_identifier takes ownership of the sds string.
 static TIdentifier internPrevious(void) {
     string_t name = sdsnewlen(P.previous.tok.start, (size_t)P.previous.tok.length);
     return make_string_identifier(P.identifiers, &name);
@@ -336,7 +312,6 @@ typedef struct {
 static const ParseRule* getRule(TokenType type);
 static unique_ptr_t(CExp) parsePrecedence(Precedence precedence);
 static unique_ptr_t(CExp) expression(void);
-
 static unique_ptr_t(CExp) numberExp(void) {
     shared_ptr_t(CConst) constant = numberConst(&P.previous.tok);
     if (!constant) return uptr_new();
@@ -586,6 +561,7 @@ static const ParseRule rules[] = {
     [TOKEN_CHAR]               = {charExp,       NULL,         PREC_NONE},
     [TOKEN_AND]                = {NULL,          binaryExp,    PREC_AND},
     [TOKEN_OR]                 = {NULL,          binaryExp,    PREC_OR},
+    [TOKEN_PACKED]             = {NULL,          NULL,         PREC_NONE},
     [TOKEN_ELSE]               = {NULL,          NULL,         PREC_NONE},
     [TOKEN_FALSE]              = {literalExp,    NULL,         PREC_NONE},
     [TOKEN_TRUE]               = {literalExp,    NULL,         PREC_NONE},
@@ -611,6 +587,7 @@ static const ParseRule rules[] = {
     [TOKEN_AS]                 = {NULL,          castExp,      PREC_CAST},
     [TOKEN_ERROR]              = {NULL,          NULL,         PREC_NONE},
     [TOKEN_EOF]                = {NULL,          NULL,         PREC_NONE},
+    [TOKEN_SECTION]            = {NULL,           NULL,         PREC_NONE}
 };
 
 static const ParseRule* getRule(TokenType type) { return &rules[type]; }
@@ -728,9 +705,8 @@ static unique_ptr_t(CExp) expression(void) { return parsePrecedence(PREC_ASSIGNM
 
 static unique_ptr_t(CStatement) statement(void);
 static unique_ptr_t(CBlock) block(void);
-static unique_ptr_t(CVariableDeclaration) varDeclaration(CStorageClass storage_class);
+static unique_ptr_t(CVariableDeclaration) varDeclaration(CStorageClass storage_class, bool has_section, TIdentifier section); 
 static unique_ptr_t(CInitializer) initializer(void);
-
 static unique_ptr_t(CStatement) returnStatement(void) {
     size_t info_at = P.previous.info_at;
     unique_ptr_t(CExp) value = uptr_new();
@@ -791,7 +767,7 @@ static unique_ptr_t(CStatement) forStatement(void) {
     }
     else if (match(TOKEN_VAR)) {
         CStorageClass sc = init_CStorageClass();
-        unique_ptr_t(CVariableDeclaration) decl = varDeclaration(sc);
+        unique_ptr_t(CVariableDeclaration) decl = varDeclaration(sc, false, 0);
         if (!decl) return uptr_new();
         init = make_CInitDecl(&decl);
     }
@@ -950,7 +926,7 @@ static unique_ptr_t(CInitializer) initializer(void) {
 }
 
 //  var NAME ':' type [ '=' initializer ] ';'
-static unique_ptr_t(CVariableDeclaration) varDeclaration(CStorageClass storage_class) {
+static unique_ptr_t(CVariableDeclaration) varDeclaration(CStorageClass storage_class, bool has_section, TIdentifier section) {    
     if (!consume(TOKEN_IDENTIFIER, "expect variable name")) return uptr_new();
     size_t info_at = P.previous.info_at;
     TIdentifier name = internPrevious();
@@ -966,7 +942,7 @@ static unique_ptr_t(CVariableDeclaration) varDeclaration(CStorageClass storage_c
     }
     if (!consume(TOKEN_SEMICOLON, "expect ';' after variable declaration")) return uptr_new();
 
-    return make_CVariableDeclaration(name, &init, &var_type, &storage_class, info_at);
+    return make_CVariableDeclaration(name, &init, &var_type, &storage_class, has_section, section, info_at);
 }
 
 static unique_ptr_t(CBlockItem) blockItem(void) {
@@ -977,7 +953,7 @@ static unique_ptr_t(CBlockItem) blockItem(void) {
     else if (match(TOKEN_EXTERN)) { sc = init_CExtern(); hasStorage = true; }
 
     if (match(TOKEN_VAR)) {
-        unique_ptr_t(CVariableDeclaration) var_decl = varDeclaration(sc);
+        unique_ptr_t(CVariableDeclaration) var_decl = varDeclaration(sc, false, 0);
         if (!var_decl) return uptr_new();
         unique_ptr_t(CDeclaration) decl = make_CVarDecl(&var_decl);
         return make_CD(&decl);
@@ -1005,7 +981,7 @@ static unique_ptr_t(CBlock) block(void) {
 }
 
 //  fun NAME '(' [ NAME ':' type { ',' NAME ':' type } ] ')' [ '->' type ] ( block | ';' )
-static unique_ptr_t(CDeclaration) funDeclaration(CStorageClass storage_class) {
+static unique_ptr_t(CDeclaration) funDeclaration(CStorageClass storage_class, bool has_section, TIdentifier section) {    
     if (!consume(TOKEN_IDENTIFIER, "expect function name")) return uptr_new();
     size_t info_at = P.previous.info_at;
     TIdentifier name = internPrevious();
@@ -1052,12 +1028,12 @@ static unique_ptr_t(CDeclaration) funDeclaration(CStorageClass storage_class) {
     }
 
     unique_ptr_t(CFunctionDeclaration) fun_decl
-        = make_CFunctionDeclaration(name, &params, &body, &fun_type, &storage_class, info_at);
+        = make_CFunctionDeclaration(name, &params, &body, &fun_type, &storage_class, has_section, section, info_at);
     return make_CFunDecl(&fun_decl);
 }
 
 //  ( struct | union ) NAME [ '{' { NAME ':' type ',' } '}' ] ';'
-static unique_ptr_t(CDeclaration) structDeclaration(bool is_union) {
+static unique_ptr_t(CDeclaration) structDeclaration(bool is_union, bool is_packed) {
     if (!consume(TOKEN_IDENTIFIER, "expect struct or union name")) return uptr_new();
     size_t info_at = P.previous.info_at;
     TIdentifier tag = internPrevious();
@@ -1084,17 +1060,11 @@ static unique_ptr_t(CDeclaration) structDeclaration(bool is_union) {
 
     if (!consume(TOKEN_SEMICOLON, "expect ';' after struct declaration")) return uptr_new();
 
-    unique_ptr_t(CStructDeclaration) struct_decl = make_CStructDeclaration(tag, is_union, &members, info_at);
-    return make_CStructDecl(&struct_decl);
+    unique_ptr_t(CStructDeclaration) struct_decl = make_CStructDeclaration(tag, is_union, is_packed, &members, info_at);    return make_CStructDecl(&struct_decl);
 }
 
-// Skip to something that plausibly starts a new declaration, so one syntax
-// error does not cascade.
 static void synchronize(void) {
     P.panicMode = false;
-    // Only stop at a token that can actually begin a top-level declaration.
-    // Stopping at a semicolon (as clox does for statements) leaves the parser
-    // mid-function-body and every following line reports a bogus error.
     while (!check(TOKEN_EOF)) {
         switch (P.current.tok.type) {
             case TOKEN_FUN:
@@ -1110,18 +1080,24 @@ static void synchronize(void) {
         advance();
     }
 }
-
 static unique_ptr_t(CDeclaration) declaration(void) {
     CStorageClass sc = init_CStorageClass();
     if (match(TOKEN_STATIC)) sc = init_CStatic();
     else if (match(TOKEN_EXTERN)) sc = init_CExtern();
 
-    if (match(TOKEN_FUN))    return funDeclaration(sc);
-    if (match(TOKEN_STRUCT)) return structDeclaration(false);
-    if (match(TOKEN_UNION))  return structDeclaration(true);
-
+    bool is_packed = match(TOKEN_PACKED);
+    bool has_section = false;
+    TIdentifier section = 0;
+    if (match(TOKEN_SECTION)) {
+        if (!consume(TOKEN_STRING, "expect section name string after 'section'")) return uptr_new();
+        has_section = true;
+        section = internPrevious();
+    }
+    if (match(TOKEN_FUN))    return funDeclaration(sc, has_section, section);    
+    if (match(TOKEN_STRUCT)) return structDeclaration(false, is_packed);
+    if (match(TOKEN_UNION))  return structDeclaration(true, is_packed);
     if (match(TOKEN_VAR)) {
-        unique_ptr_t(CVariableDeclaration) var_decl = varDeclaration(sc);
+        unique_ptr_t(CVariableDeclaration) var_decl = varDeclaration(sc, has_section, section);
         if (!var_decl) return uptr_new();
         return make_CVarDecl(&var_decl);
     }
@@ -1130,10 +1106,6 @@ static unique_ptr_t(CDeclaration) declaration(void) {
     advance();
     return uptr_new();
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Entry point
 
 error_t parse_prism(const char* source, const char* filename, ErrorsContext* errors,
     IdentifierContext* identifiers, unique_ptr_t(CProgram) * c_ast) {

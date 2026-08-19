@@ -188,16 +188,17 @@ static TokenType identifierType(void) {
     case 'i': return checkKeyword(1, 1, "f", TOKEN_IF);
     case 'n': return checkKeyword(1, 2, "il", TOKEN_NIL);
     case 'o': return checkKeyword(1, 1, "r", TOKEN_OR);
+    case 'p': return checkKeyword(1,5, "acked", TOKEN_PACKED);
     case 'r': return checkKeyword(1, 5, "eturn", TOKEN_RETURN);
     case 's':
       if (len > 1) {
         switch (lexer.start[1]) {
           case 'i': return checkKeyword(2, 4, "zeof", TOKEN_SIZEOF);
           case 'w': return checkKeyword(2, 4, "itch", TOKEN_SWITCH);
+          case 'e': return checkKeyword(2, 5, "ction", TOKEN_SECTION);
           case 't':
             if (len > 2) {
               switch (lexer.start[2]) {
-                // CHANGED: the spelling is now `struct`, not `class`.
                 case 'r': return checkKeyword(3, 3, "uct", TOKEN_STRUCT);
                 case 'a': return checkKeyword(3, 3, "tic", TOKEN_STATIC);
               }
@@ -219,8 +220,6 @@ static Token identifier(void) {
   return makeToken(identifierType());
 }
 
-// Consumes a trailing u/U and/or l/L. The parser reads the suffix back off the
-// slice to choose between CConstInt, CConstUInt, CConstLong and CConstULong.
 static void intSuffix(void) {
   bool sawU = false, sawL = false;
   for (;;) {

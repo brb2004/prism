@@ -288,10 +288,14 @@ void free_InitialValue(shared_ptr_t(InitialValue) * self);
 typedef struct FunAttr {
     bool is_def;
     bool is_glob;
+    bool has_section;
+    TIdentifier section;
 } FunAttr;
 
 typedef struct StaticAttr {
     bool is_glob;
+    bool has_section;
+    TIdentifier section;
     shared_ptr_t(InitialValue) init;
 } StaticAttr;
 
@@ -318,8 +322,9 @@ typedef struct IdentifierAttr {
 extern "C" {
 #endif
 unique_ptr_t(IdentifierAttr) make_IdentifierAttr(void);
-unique_ptr_t(IdentifierAttr) make_FunAttr(bool is_def, bool is_glob);
-unique_ptr_t(IdentifierAttr) make_StaticAttr(bool is_glob, shared_ptr_t(InitialValue) * init);
+unique_ptr_t(IdentifierAttr) make_FunAttr(bool is_def, bool is_glob, bool has_section, TIdentifier section);
+unique_ptr_t(IdentifierAttr) make_StaticAttr(
+    bool is_glob, bool has_section, TIdentifier section, shared_ptr_t(InitialValue) * init);
 unique_ptr_t(IdentifierAttr) make_ConstantAttr(shared_ptr_t(StaticInit) * static_init);
 unique_ptr_t(IdentifierAttr) make_LocalAttr(void);
 void free_IdentifierAttr(unique_ptr_t(IdentifierAttr) * self);
