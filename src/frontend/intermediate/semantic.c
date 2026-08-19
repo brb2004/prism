@@ -1922,7 +1922,7 @@ static error_t check_fun_decl(Ctx ctx, const CFunctionDeclaration* node) {
     }
 
     sptr_copy(Type, node->fun_type, glob_fun_type);
-    glob_fun_attrs = make_FunAttr(is_def, is_glob, false, 0);
+    glob_fun_attrs = make_FunAttr(is_def, is_glob, node->has_section, node->section);
     symbol = make_Symbol(&glob_fun_type, &glob_fun_attrs);
     map_move_add(ctx->frontend->symbol_table, node->name, symbol);
     FINALLY;
@@ -2347,7 +2347,7 @@ static error_t check_file_var_decl(Ctx ctx, const CVariableDeclaration* node) {
     }
 
     sptr_copy(Type, node->var_type, glob_var_type);
-    glob_var_attrs = make_StaticAttr(is_glob, false, 0, &init_value);
+    glob_var_attrs = make_StaticAttr(is_glob, node->has_section, node->section, &init_value);
     symbol = make_Symbol(&glob_var_type, &glob_var_attrs);
     map_move_add(ctx->frontend->symbol_table, node->name, symbol);
     FINALLY;

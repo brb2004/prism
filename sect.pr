@@ -1,0 +1,2 @@
+section ".limine_requests" fun boot() -> i32 { return 1; }
+fun main() -> i32 { return boot(); }

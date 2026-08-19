@@ -2709,7 +2709,6 @@ static unique_ptr_t(AsmTopLevel) gen_fun_toplvl(Ctx ctx, const TacFunction* node
                     shared_ptr_t(AsmOperand) dst = gen_memory(REG_Bp, -8l);
                     shared_ptr_t(AssemblyType) asm_type_dst = make_QuadWord();
                     push_instr(ctx, make_AsmMov(&asm_type_dst, &src, &dst));
-                    return make_AsmFunction(name, is_glob, is_ret_memory, has_section, section, &body);
                 }
             }
         }
@@ -2721,7 +2720,7 @@ static unique_ptr_t(AsmTopLevel) gen_fun_toplvl(Ctx ctx, const TacFunction* node
         ctx->p_instrs = NULL;
     }
 
-    return make_AsmFunction(name, is_glob, is_ret_memory, false, 0, &body);
+    return make_AsmFunction(name, is_glob, is_ret_memory, has_section, section, &body);
 }
 static unique_ptr_t(AsmTopLevel) gen_static_var_toplvl(Ctx ctx, const TacStaticVariable* node) {
     TIdentifier name = node->name;
