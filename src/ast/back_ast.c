@@ -299,13 +299,15 @@ unique_ptr_t(AsmInstruction) make_AsmPop(const AsmReg* reg) {
     return self;
 }
 
-unique_ptr_t(AsmInstruction) make_AsmCall(TIdentifier name) {
+unique_ptr_t(AsmInstruction) make_AsmCall(TIdentifier name, bool is_indirect, shared_ptr_t(AsmOperand) * callee) {
     unique_ptr_t(AsmInstruction) self = make_AsmInstruction();
     self->type = AST_AsmCall_t;
     self->get._AsmCall.name = name;
+    self->get._AsmCall.is_indirect = is_indirect;
+    self->get._AsmCall.callee = sptr_new();
+    sptr_move(AsmOperand, *callee, self->get._AsmCall.callee);
     return self;
 }
-
 unique_ptr_t(AsmInstruction) make_AsmRet(void) {
     unique_ptr_t(AsmInstruction) self = make_AsmInstruction();
     self->type = AST_AsmRet_t;
@@ -388,6 +390,7 @@ void free_AsmInstruction(unique_ptr_t(AsmInstruction) * self) {
         case AST_AsmPop_t:
             break;
         case AST_AsmCall_t:
+            free_AsmOperand(&(*self)->get._AsmCall.callee);
             break;
         case AST_AsmRet_t:
             break;

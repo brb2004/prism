@@ -1480,7 +1480,11 @@ static void ret_8b_call_instr(
 
 static void call_instr(Ctx ctx, const TacFunCall* node) {
     bool is_ret_memory = false;
-    FunType* fun_type = &map_get(ctx->frontend->symbol_table, node->name)->type_t->get._FunType;
+    Type* callee_type = map_get(ctx->frontend->symbol_table, node->name)->type_t;
+    if (callee_type->type == AST_Pointer_t) {
+        callee_type = callee_type->get._Pointer.ref_type;
+    }
+    FunType* fun_type = &callee_type->get._FunType;
     if (node->dst && is_value_struct(ctx, node->dst)) {
         TIdentifier name = node->dst->get._TacVariable.name;
         const Structure* struct_type = &map_get(ctx->frontend->symbol_table, name)->type_t->get._Structure;
@@ -1498,8 +1502,12 @@ static void call_instr(Ctx ctx, const TacFunCall* node) {
         TLong stack_padding = arg_call_instr(ctx, node, fun_type, is_ret_memory);
 
         {
-            TIdentifier name = node->name;
-            push_instr(ctx, make_AsmCall(name));
+                TIdentifier name = node->name;
+            shared_ptr_t(AsmOperand) callee = sptr_new();
+            if (node->is_indirect) {
+                callee = gen_op(ctx, node->callee);
+            }
+            push_instr(ctx, make_AsmCall(name, node->is_indirect, &callee));
         }
 
         if (stack_padding > 0l) {

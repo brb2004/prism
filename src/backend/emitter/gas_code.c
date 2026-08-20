@@ -777,6 +777,12 @@ static void pop_instr(Ctx ctx, const AsmPop* node) {
 }
 
 static void call_instr(Ctx ctx, const AsmCall* node) {
+    if (node->is_indirect) {
+        emit(ctx, TAB TAB "call *");
+        emit_op(ctx, node->callee, 8);
+        emit(ctx, LF);
+        return;
+    }
     emit(ctx, TAB TAB "call ");
     emit_identifier(ctx, node->name);
 #ifndef __APPLE__

@@ -705,7 +705,19 @@ static unique_ptr_t(TacExpResult) call_res_instr(Ctx ctx, const CFunctionCall* n
     }
     shared_ptr_t(TacValue) dst_cp = sptr_new();
     sptr_copy(TacValue, dst, dst_cp);
-    push_instr(ctx, make_TacFunCall(name, &args, &dst_cp));
+
+    bool is_indirect = false;
+    shared_ptr_t(TacValue) callee = sptr_new();
+    {
+        const Symbol* sym = map_get(ctx->frontend->symbol_table, node->name);
+        if (sym->type_t->type == AST_Pointer_t
+            && sym->type_t->get._Pointer.ref_type->type == AST_FunType_t) {
+            is_indirect = true;
+            callee = make_TacVariable(node->name);
+        }
+    }
+
+    push_instr(ctx, make_TacFunCall(name, is_indirect, &callee, &args, &dst_cp));
     return make_TacPlainOperand(&dst);
 }
 

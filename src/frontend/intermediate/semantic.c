@@ -1207,7 +1207,7 @@ static error_t check_call_exp(Ctx ctx, CFunctionCall* node) {
         THROW_AT_TOKEN(
             node->_base->info_at, GET_SEMANTIC_MSG(MSG_var_used_as_fun, str_fmt_name(node->name, &name_fmt)));
     }
-    else if (vec_size(fun_type->param_types) != vec_size(node->args)) {
+    if (vec_size(fun_type->param_types) != vec_size(node->args)) {
         strto_fmt_1 = str_to_string(vec_size(node->args));
         strto_fmt_2 = str_to_string(vec_size(fun_type->param_types));
         THROW_AT_TOKEN(node->_base->info_at,

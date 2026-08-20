@@ -367,8 +367,9 @@ typedef struct AsmPop {
 
 typedef struct AsmCall {
     TIdentifier name;
+    bool is_indirect;
+    shared_ptr_t(AsmOperand) callee;
 } AsmCall;
-
 typedef struct AsmRet {
     int8_t _empty;
 } AsmRet;
@@ -430,8 +431,9 @@ unique_ptr_t(AsmInstruction) make_AsmSetCC(const AsmCondCode* cond_code, shared_
 unique_ptr_t(AsmInstruction) make_AsmLabel(TIdentifier name);
 unique_ptr_t(AsmInstruction) make_AsmPush(shared_ptr_t(AsmOperand) * src);
 unique_ptr_t(AsmInstruction) make_AsmPop(const AsmReg* reg);
-unique_ptr_t(AsmInstruction) make_AsmCall(TIdentifier name);
+unique_ptr_t(AsmInstruction) make_AsmCall(TIdentifier name, bool is_indirect, shared_ptr_t(AsmOperand) * callee);
 unique_ptr_t(AsmInstruction) make_AsmRet(void);
+
 void free_AsmInstruction(unique_ptr_t(AsmInstruction) * self);
 #ifdef __cplusplus
 }

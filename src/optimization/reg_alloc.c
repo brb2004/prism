@@ -313,6 +313,9 @@ static void infer_transfer_live_regs(Ctx ctx, size_t instr_idx, size_t next_inst
             infer_transfer_used_op(ctx, node->get._AsmPush.src, next_instr_idx);
             break;
         case AST_AsmCall_t:
+            if (node->get._AsmCall.is_indirect) {
+                infer_transfer_used_op(ctx, node->get._AsmCall.callee, next_instr_idx);
+            }
             infer_transfer_updated_reg(ctx, REG_Ax, next_instr_idx);
             infer_transfer_updated_reg(ctx, REG_Cx, next_instr_idx);
             infer_transfer_updated_reg(ctx, REG_Dx, next_instr_idx);
@@ -654,6 +657,9 @@ static void infer_init_edges(Ctx ctx, size_t instr_idx) {
             infer_init_updated_op_edges(ctx, node->get._AsmSetCC.dst, instr_idx);
             break;
         case AST_AsmPush_t:
+            if (node->get._AsmCall.is_indirect) {
+                infer_init_used_op_edges(ctx, node->get._AsmCall.callee);
+            }
             infer_init_used_op_edges(ctx, node->get._AsmPush.src);
             break;
         case AST_AsmCall_t: {
@@ -1156,7 +1162,14 @@ static void alloc_push_instr(Ctx ctx, AsmPush* node) {
         }
     }
 }
-
+static void alloc_call_instr(Ctx ctx, AsmCall* node) {
+    if (node->is_indirect && node->callee->type == AST_AsmPseudo_t) {
+        shared_ptr_t(AsmOperand) hard_reg = alloc_hard_reg(ctx, node->callee->get._AsmPseudo.name);
+        if (hard_reg) {
+            sptr_move(AsmOperand, hard_reg, node->callee);
+        }
+    }
+}
 static void alloc_instr(Ctx ctx, size_t instr_idx) {
     AsmInstruction* node = GET_INSTR(instr_idx);
     switch (node->type) {
@@ -1200,7 +1213,9 @@ static void alloc_instr(Ctx ctx, size_t instr_idx) {
             alloc_push_instr(ctx, &node->get._AsmPush);
             break;
         case AST_AsmCdq_t:
+            break;
         case AST_AsmCall_t:
+            alloc_call_instr(ctx, &node->get._AsmCall);
             break;
         default:
             break;

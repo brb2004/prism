@@ -381,6 +381,22 @@ static void repl_push_pseudo(Ctx ctx, AsmPush* node) {
     }
 }
 
+static void repl_call_pseudo(Ctx ctx, AsmCall* node) {
+    if (!node->is_indirect) {
+        return;
+    }
+    switch (node->callee->type) {
+        case AST_AsmPseudo_t:
+            repl_pseudo_op(ctx, &node->callee->get._AsmPseudo, &node->callee);
+            break;
+        case AST_AsmPseudoMem_t:
+            repl_pseudo_mem_op(ctx, &node->callee->get._AsmPseudoMem, &node->callee);
+            break;
+        default:
+            break;
+    }
+}
+
 static void repl_pseudo_regs(Ctx ctx, AsmInstruction* node) {
     switch (node->type) {
         case AST_AsmMov_t:
@@ -403,6 +419,9 @@ static void repl_pseudo_regs(Ctx ctx, AsmInstruction* node) {
             break;
         case AST_AsmUnary_t:
             repl_unary(ctx, &node->get._AsmUnary);
+            break;
+        case AST_AsmCall_t:
+            repl_call_pseudo(ctx, &node->get._AsmCall);
             break;
         case AST_AsmBinary_t:
             repl_binary_pseudo(ctx, &node->get._AsmBinary);
