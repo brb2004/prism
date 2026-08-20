@@ -12,6 +12,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -21,15 +22,29 @@ jobs:
         run: |
           cd bin
           ./make.sh
+
       - name: Run tests
         run: ./run_tests.sh
+
       - name: Check freestanding link
         run: |
           printf 'fun main() -> i32 {\n  return 42;\n}\n' > ci_free.pr
           ./bin/driver.sh --freestanding -o ci_free.elf ci_free.pr
           readelf -h ci_free.elf
           readelf -d ci_free.elf 2>&1 | tee dyn.txt
-          if grep -q "Dynamic section" dyn.txt; then
+          if grep -qi "^dynamic section" dyn.txt; then
             echo "error: freestanding binary has a dynamic section"
             exit 1
           fi
+
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prismc-linux
+          path: |
+            bin/prismc
+            ci_free.elf
+            dyn.txt
+          if-no-files-found: warn
+          retention-days: 14
